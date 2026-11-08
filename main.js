@@ -602,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fishGameWindow.classList.contains('hidden')) return;
         if (event.code === 'Space' || event.code === 'ArrowUp') {
             event.preventDefault();
-            fishGameFrame.contentWindow.postMessage({ type: 'fish-game-input' }, '*');
+            fishGameFrame.contentWindow.postMessage({ type: 'fish-game-input', code: event.code }, '*');
         }
     });
 

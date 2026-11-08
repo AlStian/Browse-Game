@@ -9,11 +9,23 @@
 </head>
 <body>
   <main class="fish-game">
-    <div class="score-line" aria-live="polite">SCORE <span id="score">00000</span></div>
+    <div class="score-line" aria-live="polite">
+      <span id="questStatus" hidden></span>
+      <span>SCORE <span id="score">00000</span></span>
+    </div>
     <canvas id="gameCanvas" width="620" height="620" aria-label="Jump over obstacles"></canvas>
+    <details id="questDebug" open>
+      <summary>QUEST IMAGE DEBUG</summary>
+      <pre id="questDebugOutput" aria-live="polite"></pre>
+    </details>
     <div class="game-controls">
-      <span>SPACE / ↑ / CLICK TO JUMP</span>
-      <button id="restartButton" type="button">RESTART</button>
+      <span id="controlsHint">SPACE / ↑ / CLICK TO JUMP</span>
+      <div class="game-control-buttons">
+        <button id="modeHelpButton" type="button" aria-label="Показать режимы игры" aria-expanded="false">?</button>
+        <button id="questModeButton" type="button" hidden>MIND QUEST</button>
+        <button id="classicModeButton" type="button" hidden>CLASSIC</button>
+        <button id="restartButton" type="button">RESTART</button>
+      </div>
     </div>
   </main>
 </body>
