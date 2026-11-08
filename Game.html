@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Room — 1024x1024</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Холст комнаты 1024x1024 с черной рамкой -->
+  <div id="game-container">
+    <div class="screen-title" aria-hidden="true">
+      <div class="intro-panel intro-panel-top"></div>
+      <div class="intro-panel intro-panel-bottom"></div>
+      <div class="screen-title-text">FIND THE VICTIM</div>
+    </div>
+
+    <div id="room">
+      
+      <!-- ЧЕРНЫЕ ЛИНИИ СТЕН И УГЛОВ КАТЕГОРИЧЕСКИ ЧЕРНОГО ЦВЕТА -->
+      <div class="room-lines">
+        <div class="line-vertical"></div>
+        <div class="line-left"></div>
+        <div class="line-right"></div>
+      </div>
+
+      <!-- Левое окно (windowBIG) -->
+      <div id="window-left" class="interactive-obj" title="Левое окно" role="button" tabindex="0" aria-haspopup="dialog" aria-controls="view-overlay">
+        <img src="windowBIG.png" alt="Левое окно" class="obj-img">
+      </div>
+
+      <!-- Зеркало -->
+      <div id="window-right" class="interactive-obj" title="Mirror">
+        <img src="MirrorBIG.png" alt="Mirror" class="obj-img">
+      </div>
+
+      <!-- Стол с компьютером по центру -->
+      <div id="pc-table" class="interactive-obj" title="Компьютер">
+        <img src="PCBIG.png" alt="ПК и стол" class="obj-img">
+      </div>
+
+      <!-- Труп на полу слева (прижат в угол) -->
+      <div id="body-left" class="interactive-obj" title="Осмотреть тело">
+        <img src="corpse.png" alt="Тело" class="obj-img">
+      </div>
+
+    </div>
+
+    <!-- ТЕРМИНАЛ-ОВЕРЛЕЙ -->
+    <div id="terminal-overlay" class="terminal-overlay hidden">
+      <div class="login-screen">
+        <form class="login-panel" id="loginForm" autocomplete="off">
+          <img class="login-art" src="Windoffs.png" alt="Login screen with username and password fields, Log In and Close buttons">
+          <input class="login-hotspot username-hotspot" id="usernameInput" type="text" placeholder="Username" aria-label="Username" autocomplete="username">
+          <input class="login-hotspot password-hotspot" id="passwordInput" type="text" placeholder="Password" aria-label="Password" autocomplete="off" spellcheck="false">
+          <div class="status-msg" id="statusMsg" aria-live="polite"></div>
+          <button class="login-hotspot login-hotspot-submit" id="loginBtn" type="submit" aria-label="Log in"></button>
+          <button class="login-hotspot login-hotspot-close" id="closeTerminalBtn" type="button" aria-label="Close"></button>
+        </form>
+        <img class="login-user-art hidden" id="loginUserArt" alt="">
+        <button class="image-edit-button" id="loginImageEditBtn" type="button" aria-label="Изменить изображение экрана блокировки">EDIT</button>
+        <input class="image-file-input" id="loginImageInput" type="file" accept="image/*" aria-label="Изображение экрана блокировки">
+        <p class="image-edit-status" id="loginImageEditStatus" role="status" aria-live="polite"></p>
+        <div class="desktop-screen hidden" id="desktopScreen" aria-label="Рабочий стол компьютера">
+          <img class="desktop-art" src="DeskBig.png" alt="Рабочий стол">
+          <div class="desktop-icons" aria-label="Иконки рабочего стола">
+            <button class="desktop-hotspot desktop-icon secret-file secret-file-top" type="button" aria-label="Файл на рабочем столе"></button>
+            <button class="desktop-hotspot desktop-icon icon-one" id="paintLauncher" type="button" aria-label="Открыть Paint"></button>
+            <button class="desktop-hotspot desktop-icon icon-two" id="fishGameLauncher" type="button" aria-label="Открыть игру с рыбкой"></button>
+            <button class="desktop-hotspot desktop-icon icon-three" id="desktopFileLauncher" type="button" aria-label="Открыть файл"></button>
+            <button class="desktop-hotspot desktop-icon icon-four" id="ticTacToeLauncher" type="button" aria-label="Открыть крестики-нолики"></button>
+            <button class="desktop-hotspot desktop-icon secret-file secret-file-bottom" type="button" aria-label="Файл на рабочем столе"></button>
+          </div>
+          <div class="taskbar-hotspots" aria-label="Иконки панели задач">
+            <button class="desktop-hotspot taskbar-icon taskbar-one" type="button" aria-label="Иконка панели задач 1"></button>
+            <button class="desktop-hotspot taskbar-icon taskbar-two" type="button" aria-label="Иконка панели задач 2"></button>
+            <button class="desktop-hotspot taskbar-icon taskbar-three" type="button" aria-label="Иконка панели задач 3"></button>
+            <button class="desktop-hotspot taskbar-icon taskbar-logout" id="desktopLogoutBtn" type="button" aria-label="Выйти с рабочего стола"></button>
+          </div>
+          <section class="file-text-window hidden" id="fileTextWindow" role="dialog" aria-modal="true" aria-label="Файл">
+            <img src="Text.png" alt="Окно файла FILE.TEXT" class="file-text-image">
+            <textarea id="fileTextEditor" class="file-text-editor" aria-label="File text" spellcheck="false">I've been having memory lapses. I don't remember when they started. I wake up not knowing how or where I fell asleep. Maybe I should..</textarea>
+            <button id="closeFileTextBtn" class="file-text-close" type="button" aria-label="Закрыть файл"></button>
+          </section>
+          <div class="game-window hidden" id="ticTacToeWindow" role="dialog" aria-modal="true" aria-labelledby="ticTacToeTitle">
+            <div class="game-window-header">
+              <span id="ticTacToeTitle">TIC-TAC-TOE</span>
+              <button id="closeTicTacToeBtn" class="game-window-close" type="button" aria-label="Закрыть игру">×</button>
+            </div>
+            <p class="tic-tac-toe-status" id="ticTacToeStatus" aria-live="polite">Your turn — X</p>
+            <div class="tic-tac-toe-board" id="ticTacToeBoard" role="grid" aria-label="Поле для крестиков-ноликов">
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 1"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 2"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 3"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 4"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 5"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 6"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 7"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 8"></button>
+              <button class="tic-tac-toe-cell" type="button" role="gridcell" aria-label="Клетка 9"></button>
+            </div>
+            <button id="restartTicTacToeBtn" class="tic-tac-toe-restart" type="button">NEW GAME</button>
+          </div>
+          <section class="game-window paint-window hidden" id="paintWindow" role="dialog" aria-modal="true" aria-labelledby="paintTitle">
+            <div class="game-window-header">
+              <span id="paintTitle">PAINT — BLACK &amp; WHITE</span>
+              <button id="closePaintBtn" class="game-window-close" type="button" aria-label="Закрыть Paint">×</button>
+            </div>
+            <div class="paint-toolbar">
+              <button id="paintToolBtn" class="paint-control" type="button" aria-pressed="false">ERASER: OFF</button>
+              <label class="paint-size-label" for="paintSize">SIZE</label>
+              <input id="paintSize" class="paint-size" type="range" min="2" max="40" value="8" aria-label="Размер кисти">
+              <button id="clearPaintBtn" class="paint-control" type="button">CLEAR</button>
+            </div>
+            <div class="paint-canvas-scroll" aria-label="Прокручиваемый холст">
+              <canvas id="paintCanvas" width="900" height="700" aria-label="Белый холст для рисования"></canvas>
+            </div>
+            <p class="paint-hint">DRAG TO DRAW · SCROLL TO MOVE CANVAS</p>
+          </section>
+          <section class="game-window fish-window hidden" id="fishGameWindow" role="dialog" aria-modal="true" aria-labelledby="fishGameTitle">
+            <div class="game-window-header">
+              <span id="fishGameTitle">PIXEL FISH RUN</span>
+              <button id="closeFishGameBtn" class="game-window-close" type="button" aria-label="Закрыть игру">×</button>
+            </div>
+            <iframe id="fishGameFrame" class="fish-game-frame" src="fishrun/index.html" title="Pixel Fish Run" tabindex="0"></iframe>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="letter-overlay" class="letter-overlay hidden" role="dialog" aria-modal="true" aria-label="Письмо">
+      <button id="closeLetterBtn" class="letter-close" type="button" aria-label="Закрыть письмо">×</button>
+      <img src="letter.png" alt="Письмо" class="letter-image">
+      <button id="flipLetterBtn" class="letter-flip" type="button">TURN OVER</button>
+    </div>
+
+    <div id="mirror-overlay" class="thought-overlay mirror-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mirror-text">
+      <div class="thought-box mirror-box">
+        <img src="animir.gif" alt="A person looking into a mirror" class="mirror-image">
+        <p id="mirror-text">Oh, so it's a mirror.</p>
+        <button id="closeMirrorBtn" type="button" class="thought-continue">CONTINUE</button>
+      </div>
+    </div>
+
+    <div id="thought-overlay" class="thought-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="thought-text">
+      <div class="thought-box">
+        <p id="thought-text">Murder? Suicide? Who is this? A man? A woman? There's a note. I need to examine it more closely.</p>
+        <button id="closeThoughtBtn" type="button" class="thought-continue">CONTINUE</button>
+      </div>
+    </div>
+
+    <div id="file-message-overlay" class="thought-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="file-message-text">
+      <div class="thought-box">
+        <p id="file-message-text">This is my message. I wrote it down in a file so I wouldn't forget to send it. How did it get here? Why did I write this?</p>
+        <button id="closeFileMessageBtn" type="button" class="thought-continue">CONTINUE</button>
+      </div>
+    </div>
+
+    <div id="view-overlay" class="view-overlay hidden" role="dialog" aria-modal="true" aria-label="Вид из окна">
+      <button id="closeViewBtn" class="view-close" type="button" aria-label="Закрыть вид из окна">×</button>
+      <img src="view.gif" alt="Вид из окна" class="view-image">
+    </div>
+
+  </div>
+
+  <aside id="achievementToast" class="achievement-toast" role="status" aria-live="polite" aria-hidden="true">
+    <div class="achievement-toast-label">NEW ACHIEVEMENT</div>
+    <div class="achievement-toast-name">1507</div>
+  </aside>
+
+  <script src="main.js"></script>
+</body>
+</html>

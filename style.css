@@ -1,0 +1,971 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background-color: #ffffff;
+  color: #000000;
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Заставка: чёрные панели расходятся вверх и вниз */
+.screen-title {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+}
+
+.intro-panel {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: calc(50% + 1px);
+  background: #000000;
+  animation-duration: 1.2s;
+  animation-delay: 0.8s;
+  animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+  animation-fill-mode: forwards;
+}
+
+.intro-panel-top {
+  top: 0;
+  animation-name: reveal-up;
+}
+
+.intro-panel-bottom {
+  bottom: 0;
+  animation-name: reveal-down;
+}
+
+@keyframes reveal-up {
+  to { transform: translateY(-100%); }
+}
+
+@keyframes reveal-down {
+  to { transform: translateY(100%); }
+}
+
+.screen-title-text {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 0 12px;
+  color: #ffffff;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-size: clamp(1rem, 13cqw, 8.5rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  -webkit-text-stroke: 2px #000000;
+  paint-order: stroke fill;
+  text-shadow: 0 2px 0 #000000, 0 5px 12px rgba(0, 0, 0, 0.9);
+  animation: title-fade 0.6s ease 2.9s forwards;
+}
+
+@keyframes title-fade {
+  to { opacity: 0; visibility: hidden; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-title {
+    display: none;
+  }
+}
+
+/* Холст комнаты с рамкой 4px */
+#game-container {
+  position: relative;
+  container-type: inline-size;
+  width: min(95vh, 95vw, 1024px);
+  height: min(95vh, 95vw, 1024px);
+  aspect-ratio: 1 / 1;
+  background-color: #ffffff;
+  border: 4px solid #000000;
+  overflow: hidden;
+}
+
+.achievement-toast {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 1000;
+  width: min(300px, calc(100vw - 32px));
+  padding: 16px 20px;
+  border: 2px solid #ffffff;
+  background: #171717;
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(24px);
+  visibility: hidden;
+  transition: opacity 220ms ease, transform 220ms ease, visibility 220ms;
+  pointer-events: none;
+}
+
+.achievement-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.achievement-toast-label {
+  margin-bottom: 6px;
+  color: #bdbdbd;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+}
+
+.achievement-toast-name {
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+}
+
+#room {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* --- ЧЕРНЫЕ ЛИНИИ УГЛОВ СТЕН И ПОТОЛКА --- */
+.room-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Вертикальный угол комнаты по центру */
+.line-vertical {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 48%;
+  background-color: #000000;
+  transform: translateX(-50%);
+}
+
+/* Левая линия стыка стены и потолка (доведена до левой рамки) */
+.line-left {
+  position: absolute;
+  top: 48%;
+  left: -15%;
+  width: 65%;
+  height: 4px;
+  background-color: #000000;
+  transform-origin: top right;
+  transform: rotate(-24deg);
+}
+
+/* Правая линия стыка стены и потолка (доведена до правой рамки) */
+.line-right {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 65%;
+  height: 4px;
+  background-color: #000000;
+  transform-origin: top left;
+  transform: rotate(24deg);
+}
+
+/* Общие стили для объектов */
+.interactive-obj {
+  position: absolute;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+  z-index: 5;
+}
+
+.interactive-obj:hover {
+  filter: drop-shadow(0px 0px 6px rgba(0, 0, 0, 0.4));
+  transform: scale(1.02);
+}
+
+.obj-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Позиционирование элементов */
+#window-left {
+  top: 18%;
+  left: 6%;
+  width: 32%;
+  height: 42%;
+  z-index: 10;
+}
+
+#window-right {
+  top: 18%;
+  right: 6%;
+  width: 32%;
+  height: 42%;
+  z-index: 10;
+}
+
+#pc-table {
+  bottom: 5%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  z-index: 15;
+}
+
+/* Труп прижат к левому краю и низу без зазоров */
+#body-left {
+  bottom: -4%;
+  left: -5%;
+  width: 36%;
+  height: 36%;
+  z-index: 12;
+}
+
+/* --- ИНТЕРАКТИВНЫЕ ОБЛАСТИ ПОВЕРХ ГОТОВОЙ КАРТИНКИ --- */
+.terminal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  background: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.terminal-overlay.hidden {
+  display: none !important;
+}
+
+.letter-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4%;
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.letter-overlay.hidden {
+  display: none !important;
+}
+
+.letter-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.letter-flip {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border: 1px solid rgba(190, 190, 190, 0.35);
+  background: rgba(90, 90, 90, 0.42);
+  color: rgba(220, 220, 220, 0.72);
+  font: bold clamp(10px, 1.5cqw, 14px) 'Courier New', Courier, monospace;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.letter-flip:hover,
+.letter-flip:focus-visible {
+  border-color: rgba(230, 230, 230, 0.75);
+  background: rgba(90, 90, 90, 0.72);
+  color: #ffffff;
+}
+
+.letter-close {
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  border: 2px solid #ffffff;
+  background: #000000;
+  color: #ffffff;
+  font: bold 30px/1 'Courier New', Courier, monospace;
+  cursor: pointer;
+}
+
+.letter-close:hover,
+.letter-close:focus-visible {
+  background: #ffffff;
+  color: #000000;
+}
+
+.view-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 130;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4%;
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.view-overlay.hidden {
+  display: none !important;
+}
+
+.view-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.view-close {
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  border: 2px solid #ffffff;
+  background: #000000;
+  color: #ffffff;
+  font: bold 30px/1 'Courier New', Courier, monospace;
+  cursor: pointer;
+}
+
+.view-close:hover,
+.view-close:focus-visible {
+  background: #ffffff;
+  color: #000000;
+}
+
+.thought-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 5% 3%;
+  background: rgba(70, 70, 70, 0.48);
+}
+
+.thought-overlay.hidden {
+  display: none !important;
+}
+
+.mirror-overlay {
+  align-items: center;
+}
+
+.thought-box {
+  width: min(100%, 720px);
+  padding: clamp(18px, 4%, 40px);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: rgba(25, 25, 25, 0.78);
+  color: #ffffff;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(16px, 2.8cqw, 30px);
+  line-height: 1.55;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.mirror-image {
+  display: block;
+  max-width: 100%;
+  max-height: 50vh;
+  width: auto;
+  height: auto;
+  margin: 0 auto 1em;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.thought-continue {
+  margin-top: 1.4em;
+  padding: 0.5em 1.2em;
+  border: 1px solid #ffffff;
+  background: transparent;
+  color: #ffffff;
+  font: bold 0.7em 'Courier New', Courier, monospace;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.thought-continue:hover,
+.thought-continue:focus-visible {
+  background: #ffffff;
+  color: #000000;
+}
+
+.login-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.desktop-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: #b5b5b5;
+}
+
+.desktop-screen.hidden {
+  display: none !important;
+}
+
+.desktop-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.image-edit-button {
+  position: absolute;
+  right: 2%;
+  bottom: 2%;
+  z-index: 4;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font: bold clamp(10px, 1.5cqw, 14px) 'Courier New', Courier, monospace;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.image-edit-button:hover,
+.image-edit-button:focus-visible {
+  background: #ffffff;
+  color: #000000;
+  outline: 2px solid #000000;
+  outline-offset: 1px;
+}
+
+.image-file-input {
+  display: none;
+}
+
+.image-edit-status {
+  position: absolute;
+  right: 2%;
+  bottom: 10%;
+  z-index: 4;
+  max-width: 70%;
+  color: #ffffff;
+  font: bold clamp(9px, 1.2cqw, 12px) 'Courier New', Courier, monospace;
+  text-align: right;
+  text-shadow: 0 1px 3px #000000;
+}
+
+.desktop-hotspot {
+  position: absolute;
+  z-index: 1;
+  display: block;
+  padding: 0;
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: default;
+  transition: background-color 100ms ease, border-color 100ms ease, box-shadow 100ms ease;
+}
+
+.desktop-hotspot:focus-visible {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+  outline: none;
+}
+
+#paintLauncher:hover,
+#fishGameLauncher:hover,
+#ticTacToeLauncher:hover,
+#desktopFileLauncher:hover,
+#desktopLogoutBtn:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+  outline: none;
+}
+
+#paintLauncher,
+#fishGameLauncher,
+#ticTacToeLauncher,
+#desktopFileLauncher,
+#desktopLogoutBtn {
+  cursor: pointer;
+}
+
+.desktop-icon {
+  width: 11%;
+  height: 12%;
+}
+
+.icon-one { left: 19%; top: 26%; }
+.icon-two { left: 46%; top: 28%; }
+.icon-three { left: 71%; top: 26%; }
+.icon-four { left: 46%; top: 52%; }
+
+.desktop-screen.secret-unlocked .icon-one {
+  left: 19%;
+  top: 52%;
+}
+
+.desktop-screen.secret-unlocked .icon-two {
+  left: 46%;
+  top: 52%;
+}
+
+.desktop-screen.secret-unlocked .icon-three {
+  left: 71%;
+  top: 26%;
+}
+
+.desktop-screen.secret-unlocked .icon-four {
+  left: 46%;
+  top: 26%;
+}
+
+.secret-file-top {
+  left: 19%;
+  top: 26%;
+}
+
+.secret-file-bottom {
+  left: 71%;
+  top: 52%;
+}
+
+.taskbar-icon {
+  top: 91%;
+  height: 9%;
+}
+
+.taskbar-one { left: 26%; width: 11%; }
+.taskbar-two { left: 40%; width: 10%; }
+.taskbar-three { left: 54%; width: 10%; }
+.taskbar-logout { left: 67%; width: 10%; }
+
+.file-text-window {
+  position: absolute;
+  z-index: 6;
+  top: 50%;
+  left: 50%;
+  width: min(390px, 78%);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+.file-text-window.hidden { display: none !important; }
+
+.file-text-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.file-text-editor {
+  position: absolute;
+  top: 9%;
+  left: 2%;
+  width: 96%;
+  height: 89%;
+  padding: 2%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #000000;
+  font: clamp(12px, 1.35cqw, 17px)/1.45 'Courier New', Courier, monospace;
+  resize: none;
+  user-select: text;
+  -webkit-user-select: text;
+  caret-color: #000000;
+}
+
+.file-text-close {
+  position: absolute;
+  top: 1%;
+  right: 0.5%;
+  width: 9%;
+  height: 8%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.game-window {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  width: min(390px, 82%);
+  padding: 12px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #222222;
+  background: #d3d3d3;
+  color: #111111;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.45);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.game-window.hidden { display: none !important; }
+
+.game-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -12px -12px 10px;
+  padding: 6px 8px;
+  background: #333333;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.game-window-close {
+  width: 25px;
+  height: 23px;
+  border: 1px solid #ffffff;
+  background: #333333;
+  color: #ffffff;
+  font: bold 20px/1 'Courier New', Courier, monospace;
+  cursor: pointer;
+}
+
+.tic-tac-toe-status {
+  min-height: 1.4em;
+  margin: 4px 0 10px;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.tic-tac-toe-board {
+  display: grid;
+  width: min(260px, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  background: #333333;
+}
+
+.tic-tac-toe-cell {
+  border: 1px solid #777777;
+  background: #eeeeee;
+  color: #222222;
+  font: bold clamp(30px, 7cqw, 56px) 'Courier New', Courier, monospace;
+  cursor: pointer;
+}
+
+.tic-tac-toe-cell:hover:not(:disabled) { background: #ffffff; }
+.tic-tac-toe-cell:disabled { cursor: default; }
+
+.tic-tac-toe-restart {
+  display: block;
+  margin: 12px auto 0;
+  padding: 6px 15px;
+  border: 2px solid #333333;
+  background: #eeeeee;
+  color: #111111;
+  font: bold 12px 'Courier New', Courier, monospace;
+  cursor: pointer;
+}
+
+.tic-tac-toe-restart:hover { background: #333333; color: #ffffff; }
+
+.paint-window {
+  width: min(560px, 88%);
+  max-height: 84%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.paint-window.hidden { display: none !important; }
+
+.paint-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 5px 0 10px;
+}
+
+.paint-control {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #333333;
+  background: #eeeeee;
+  color: #111111;
+  font: bold 10px 'Courier New', Courier, monospace;
+  cursor: pointer;
+}
+
+.paint-control:hover,
+.paint-control[aria-pressed="true"] {
+  background: #333333;
+  color: #ffffff;
+}
+
+.paint-size-label {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.paint-size { width: 76px; accent-color: #222222; }
+
+.paint-canvas-scroll {
+  min-height: 0;
+  overflow: auto;
+  border: 2px solid #333333;
+  background: #ffffff;
+  overscroll-behavior: contain;
+}
+
+#paintCanvas {
+  display: block;
+  width: 900px;
+  height: 700px;
+  max-width: none;
+  background: #ffffff;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.paint-hint {
+  margin-top: 7px;
+  color: #444444;
+  font-size: 9px;
+  text-align: center;
+}
+
+.fish-window {
+  width: min(560px, 88%);
+  max-height: 84%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-align: center;
+}
+
+.fish-game-frame {
+  display: block;
+  width: 100%;
+  height: min(58vh, 560px);
+  flex: 0 1 min(58vh, 560px);
+  border: 0;
+  background: #ffffff;
+}
+
+.login-panel {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+.login-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.login-user-art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 50%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.login-user-art.hidden {
+  display: none !important;
+}
+
+.login-hotspot {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 1%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #000000;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(18px, 5cqw, 48px);
+  font-weight: bold;
+  text-align: center;
+}
+
+.login-hotspot:focus-visible {
+  outline: 3px solid #777777;
+  outline-offset: -3px;
+}
+
+.login-hotspot::placeholder {
+  color: rgba(0, 0, 0, 0.42);
+  opacity: 1;
+  text-transform: none;
+}
+
+.username-hotspot,
+.password-hotspot {
+  left: 25.2%;
+  width: 50.4%;
+  height: 8%;
+  background: rgba(255, 255, 255, 0.01);
+  cursor: text;
+  user-select: text;
+}
+
+.username-hotspot {
+  top: 58.1%;
+}
+
+.password-hotspot {
+  top: 71.1%;
+}
+
+.login-hotspot-submit,
+.login-hotspot-close {
+  left: 25.2%;
+  width: 50%;
+  height: 7%;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.login-hotspot-submit {
+  top: 81.2%;
+}
+
+.login-hotspot-submit.shake {
+  animation: login-error-shake 380ms ease-in-out;
+}
+
+@keyframes login-error-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-9px); }
+  40%, 80% { transform: translateX(9px); }
+}
+
+.login-hotspot-close {
+  top: 89.4%;
+}
+
+.login-hotspot-submit:hover,
+.login-hotspot-close:hover {
+  outline: 3px solid rgba(100, 100, 100, 0.65);
+  outline-offset: -3px;
+}
+
+.login-hotspot-close {
+  left: 26%;
+  width: 48%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-hotspot-submit.shake {
+    animation-duration: 1ms;
+  }
+}
+
+.terminal-overlay .status-msg {
+  position: absolute;
+  top: 78%;
+  left: 0;
+  z-index: 2;
+  width: 100%;
+  min-height: 1.2em;
+  color: #b00000;
+  font-size: clamp(10px, 1.6cqw, 16px);
+  font-weight: bold;
+  text-align: center;
+  pointer-events: none;
+}
+
+.terminal-overlay .success-overlay {
+  position: absolute;
+  inset: 50% 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 4px solid #000000;
+  background: #ffffff;
+  color: #000000;
+  text-align: center;
+}
+
+.terminal-overlay .success-title {
+  padding: 6px 14px;
+  background: #000000;
+  color: #ffffff;
+  font-size: clamp(18px, 3cqw, 36px);
+  font-weight: bold;
+  letter-spacing: 0.12em;
+}
+
+.success-reset {
+  padding: 8px 24px;
+  border: 2px solid #000000;
+  background: #000000;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}

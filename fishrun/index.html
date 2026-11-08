@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pixel Fish Run</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main class="fish-game">
+    <div class="score-line" aria-live="polite">SCORE <span id="score">00000</span></div>
+    <canvas id="gameCanvas" width="620" height="620" aria-label="Jump over obstacles"></canvas>
+    <div class="game-controls">
+      <span>SPACE / ↑ / CLICK TO JUMP</span>
+      <button id="restartButton" type="button">RESTART</button>
+    </div>
+  </main>
+</body>
+</html>
